@@ -1,7 +1,7 @@
 import os
 import matplotlib.pyplot as plt
 import pandas as pd
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 
 def run(dataframe, output_dir):
     print("\n" + "=" * 70)
@@ -15,34 +15,40 @@ def run(dataframe, output_dir):
     print(f"\nDistribuição de 't_sigma_f' (top 10):\n{dataframe['t_sigma_f'].value_counts().head(10).to_string()}")
 
     df_encoded = dataframe[["dist", "dist_min", "dist_max", "v_rel", "v_inf", "h",
-                            "t_sigma_f", "is_pha"]].copy()
+                            "t_sigma_f", "des", "is_pha"]].copy()
 
-    # --- 4.1 Label Encoding em 't_sigma_f' ---
-    le = LabelEncoder()
-    df_encoded["t_sigma_f_label"] = le.fit_transform(df_encoded["t_sigma_f"].astype(str))
-    print(f"\n4.1 Label Encoding de 't_sigma_f' — primeiros 10 mapeamentos:")
-    for cls, lbl in zip(le.classes_[:10], le.transform(le.classes_[:10])):
+    # --- 4.1 e 4.2 Label Encoding ---
+    label_encoder = LabelEncoder()
+    label_cols = ["t_sigma_f", "des"]
+    for col in label_cols:
+        df_encoded[f"{col}_encoded"] = label_encoder.fit_transform(df_encoded[col].astype(str))
+        print(f"\n4.{label_cols.index(col)+1} Label Encoding de '{col}' — {label_encoder.classes_.shape[0]} categorias codificadas.")
+
+    print(f"\nPrimeiros mapeamentos de 't_sigma_f':")
+    label_encoder.fit(df_encoded["t_sigma_f"].astype(str))
+    for cls, lbl in zip(label_encoder.classes_[:10], label_encoder.transform(label_encoder.classes_[:10])):
         print(f"  '{cls}' → {lbl}")
-
-    # --- 4.2 Label Encoding em 'des' (alta cardinalidade — apenas label) ---
-    le_des = LabelEncoder()
-    df_encoded["des_label"] = le_des.fit_transform(dataframe["des"].astype(str))
-    print(f"\n4.2 Label Encoding de 'des' — {le_des.classes_.shape[0]} categorias únicas codificadas.")
 
     # --- 4.3 One-Hot Encoding em 't_sigma_f' (após agrupar valores raros) ---
     top_sigma = dataframe["t_sigma_f"].value_counts().head(10).index
     df_encoded["t_sigma_grouped"] = dataframe["t_sigma_f"].where(
         dataframe["t_sigma_f"].isin(top_sigma), other="outro"
     )
-    df_ohe = pd.get_dummies(df_encoded, columns=["t_sigma_grouped"], prefix="sigma", drop_first=False)
-    ohe_cols = [c for c in df_ohe.columns if c.startswith("sigma_")]
+
+    ohe = OneHotEncoder(sparse_output=False)
+    sigma_encoded = ohe.fit_transform(df_encoded[["t_sigma_grouped"]])
+    ohe_cols = ohe.get_feature_names_out(["t_sigma_grouped"]).tolist()
+    sigma_encoded_df = pd.DataFrame(sigma_encoded, columns=ohe_cols, index=df_encoded.index)
+
+    df_ohe = df_encoded.drop(columns=["t_sigma_grouped"])
+    df_ohe = pd.concat([df_ohe, sigma_encoded_df], axis=1)
     print(f"\n4.3 One-Hot Encoding de 't_sigma_f' (top-10 + 'outro') — colunas criadas: {ohe_cols}")
 
     print(f"\nShape antes da codificação : {dataframe[['dist','v_rel','h','t_sigma_f']].shape}")
     print(f"Shape após a codificação   : {df_ohe.shape}")
 
     print("\nPrimeiras linhas do dataset codificado:")
-    print(df_ohe[["dist", "v_rel", "h", "t_sigma_f_label", "des_label"] + ohe_cols].head(5).to_string())
+    print(df_ohe[["dist", "v_rel", "h", "t_sigma_f_encoded", "des_encoded"] + ohe_cols].head(5).to_string())
 
     # Visualização comparativa
     fig, axes = plt.subplots(1, 2, figsize=(14, 4))
