@@ -38,6 +38,7 @@ def data_validation(dataframe, dataframe_imported, output_dir):
     plt.savefig(os.path.join(output_dir, "3_1_dados_faltantes.png"), bbox_inches="tight")
     plt.show()
 
+    print("  Estratégia: mediana (mais robusta que a média na presença de outliers)")
     df_treated = dataframe.copy()
     for col in ["v_inf", "h"]:
         if df_treated[col].isnull().sum() > 0:

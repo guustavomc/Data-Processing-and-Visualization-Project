@@ -38,6 +38,16 @@ dataframe["month"]  = dataframe["cd_parsed"].dt.month
 dataframe["is_pha"] = dataframe["h"] < 22          # flag de Potentially Hazardous Asteroid
 dataframe["dist_ld"] = dataframe["dist"] * 389.17  # distância em Distâncias Lunares
 
+print("\nATRIBUTOS DERIVADOS (feature engineering):")
+print("  is_pha   — 1 se h < 22, 0 caso contrário (proxy para PHA)    [binário]")
+print("  dist_ld  — Distância em Lunar Distances (dist × 389.17)       [numérico]")
+print("  year     — Ano extraído de 'cd'                               [numérico]")
+print("  month    — Mês extraído de 'cd'                               [numérico]")
+
+print("\n  NOTA: A definição oficial de PHA pela NASA exige H < 22 E MOID ≤ 0.05 AU.")
+print("  Aqui usamos apenas H < 22 como proxy simplificado, pois o dataset")
+print("  não contém o parâmetro MOID (distância mínima de interseção orbital).")
+
 print(f"\nShape do dataset: {dataframe.shape[0]} linhas x {dataframe.shape[1]} colunas")
 print("\nPrimeiras linhas:")
 print(dataframe_imported.head())

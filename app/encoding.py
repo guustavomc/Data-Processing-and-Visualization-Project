@@ -14,6 +14,10 @@ def run(dataframe, output_dir):
     print(f"Valores únicos em 'des'      : {dataframe['des'].nunique()}")
     print(f"\nDistribuição de 't_sigma_f' (top 10):\n{dataframe['t_sigma_f'].value_counts().head(10).to_string()}")
 
+    print("\n  NOTA: Label Encoding de 'des' é demonstrativo. Em um modelo real,")
+    print("  esta coluna seria descartada ou usada apenas como identificador,")
+    print("  pois a ordem numérica imposta não tem significado semântico.")
+
     df_encoded = dataframe[["dist", "dist_min", "dist_max", "v_rel", "v_inf", "h",
                             "t_sigma_f", "des", "is_pha"]].copy()
 
